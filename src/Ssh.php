@@ -22,11 +22,13 @@ class Ssh
 
     private int $timeout = 0;
 
-    public function __construct(string $user, string $host, int $port = null)
+    public function __construct(string $user, string $host, string $password, int $port = null)
     {
         $this->user = $user;
 
         $this->host = $host;
+
+        $this->setPassword($password);
 
         if ($port !== null) {
             $this->usePort($port);
@@ -37,6 +39,19 @@ class Ssh
         $this->processConfigurationClosure = fn (Process $process) => null;
 
         $this->onOutput = fn ($type, $line) => null;
+    }
+
+    public function setPassword(string $password)
+    : self {
+
+        $this->password = "sshpass -p " . $password;
+
+        return $this;
+    }
+
+    private function getPassword() {
+
+        return $this->password ?? '';
     }
 
     public static function create(...$args): self
@@ -169,15 +184,19 @@ class Ssh
 
         $target = $this->getTargetForSsh();
 
+        $password = $this->getPassword();
+
         if (in_array($this->host, ['local', 'localhost', '127.0.0.1'])) {
             return $commandString;
         }
 
         $bash = $this->addBash ? "'bash -se'" : '';
 
-        return "ssh {$extraOptions} {$target} {$bash} << \\$delimiter".PHP_EOL
-                    .$commandString.PHP_EOL
-                    .$delimiter;
+        return "{$password} ssh {$extraOptions} {$target} 'bash -se' << \\$delimiter" . PHP_EOL . $commandString . PHP_EOL . $delimiter;
+
+//        return "ssh {$extraOptions} {$target} {$bash} << \\$delimiter".PHP_EOL
+//                    .$commandString.PHP_EOL
+//                    .$delimiter;
     }
 
     /**
