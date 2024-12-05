@@ -237,7 +237,10 @@ class Ssh
 
     public function getUploadCommand(string $sourcePath, string $destinationPath): string
     {
-        return "scp {$this->getExtraScpOptions()} $sourcePath {$this->getTargetForScp()}:$destinationPath";
+        $password = $this->getPassword();
+
+        return "{$password} scp {$this->getExtraScpOptions()} $sourcePath {$this->getTargetForScp()}:$destinationPath";
+
     }
 
     public function upload(string $sourcePath, string $destinationPath): Process
